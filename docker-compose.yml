@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:14
+    container_name: aampere-postgres
+    environment:
+      POSTGRES_USER: aampere_user
+      POSTGRES_PASSWORD: aampere_password
+      POSTGRES_DB: aampere_evs
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - aampere-network
+
+  # Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aampere-backend
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://aampere_user:aampere_password@postgres:5432/aampere_evs
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - aampere-network
+    command: npm run dev
+
+networks:
+  aampere-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
